@@ -19,16 +19,21 @@ if __name__ == '__main__':
     table = dynamodb.Table(os.environ['table_name'])
     response = table.scan()
 
-    data = response["Items"]
-    print(data)
+    #df = pd.json_normalize(data)
+    df = pd.DataFrame(columns=["人数"])
+    for data in response["Items"]:
+        df.loc[data["MeasureDateTime"]] = data["value"]
 
-    df = pd.json_normalize(data)
-    df = df.astype({'value': float})
+    # data["value"]はDecimalで入っているが。
+    # Decimalは直接表示できないので、floatに変換
+    df = df.astype({"人数": float})
 
-    fig, ax = plt.subplots()
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y%m%d%H%M%S'))
+    # グラフの大きさを指定してプロット
+    # df.plot(figsize=(15,8))
+    df.plot()
 
-    df.plot(x='MeasureDateTime', y='value')
+    # y軸の幅を設定
+    #plt.ylim(-10, 40)
+
+    plt.grid()
     plt.show()
-
-
