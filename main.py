@@ -19,20 +19,23 @@ if __name__ == '__main__':
     table = dynamodb.Table(os.environ['table_name'])
     response = table.scan()
 
-    # df = pd.json_normalize(data)
-    df = pd.DataFrame(columns=["人数"])
-    for data in response["Items"]:
-        df.loc[data["MeasureDateTime"]] = data["value"]
+    df = pd.json_normalize(response["Items"])
 
+
+    df.MeasureDateTime = pd.to_datetime(df.MeasureDateTime)
     # data["value"]はDecimalで入っているが。
     # Decimalは直接表示できないので、floatに変換
-    df = df.astype({"人数": float})
-    # これをやると線がおかしくなる
-    #df.index = pd.to_datetime(df.index)
+    df = df.astype({"value": float})
+
+    # 日付でソートする。戻り値を受け取らないとソートされないので注意
+    df = df.sort_values(by='MeasureDateTime')
 
     fig, ax = plt.subplots()
+
+    # x軸の目盛りは1時間ごとにする
     ax.xaxis.set_major_locator(mdates.HourLocator())
+    # x軸の目盛りの表示形式を設定する
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n%H:%M'))
 
-    plt.plot(df.index, df['人数'])
+    plt.plot(df.MeasureDateTime, df.value)
     plt.show()
